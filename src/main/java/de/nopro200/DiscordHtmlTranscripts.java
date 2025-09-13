@@ -6,21 +6,16 @@ import de.nopro200.utils.format.impl.ImageFormat;
 import de.nopro200.utils.format.impl.VideoFormat;
 import kotlin.text.Charsets;
 import net.dv8tion.jda.api.entities.*;
-import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.utils.FileUpload;
 import org.apache.commons.io.FileUtils;
-import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
@@ -37,40 +32,37 @@ public class DiscordHtmlTranscripts {
             audioFormats = new AudioFormat();
 
     public static DiscordHtmlTranscripts getInstance() {
-        if (instance == null) {
-            instance = new DiscordHtmlTranscripts();
-        }
+        if (instance == null) instance = new DiscordHtmlTranscripts();
         return instance;
     }
 
     private void handleFooter(Document document, MessageEmbed embed, Element embedContentContainer) {
+        if (embed.getFooter() == null) return; // null-safe
         Element embedFooter = document.createElement("div");
         embedFooter.addClass("chatlog__embed-footer");
 
-
-        if (Objects.requireNonNull(embed.getFooter()).getIconUrl() != null) {
+        if (embed.getFooter().getIconUrl() != null) {
             Element embedFooterIcon = document.createElement("img");
             embedFooterIcon.addClass("chatlog__embed-footer-icon");
             embedFooterIcon.attr("src", embed.getFooter().getIconUrl());
             embedFooterIcon.attr("alt", "Footer icon");
             embedFooterIcon.attr("loading", "lazy");
-
             embedFooter.appendChild(embedFooterIcon);
         }
 
         Element embedFooterText = document.createElement("span");
         embedFooterText.addClass("chatlog__embed-footer-text");
-        embedFooterText.text(embed.getTimestamp() != null
-                ? embed.getFooter().getText() + " • " + embed.getTimestamp()
-                .format(DateTimeFormatter.ofPattern("HH:mm, dd.MM.yyyy"))
-                : embed.getFooter().getText());
-
+        String footerText = embed.getFooter().getText() != null ? embed.getFooter().getText() : "";
+        if (embed.getTimestamp() != null)
+            footerText += " • " + embed.getTimestamp().format(DateTimeFormatter.ofPattern("HH:mm, dd.MM.yyyy"));
+        embedFooterText.text(footerText);
         embedFooter.appendChild(embedFooterText);
 
         embedContentContainer.appendChild(embedFooter);
     }
 
     private void handleEmbedImage(Document document, MessageEmbed embed, Element embedContentContainer) {
+        if (embed.getImage() == null || embed.getImage().getUrl() == null) return;
         Element embedImage = document.createElement("div");
         embedImage.addClass("chatlog__embed-image-container");
 
@@ -86,11 +78,11 @@ public class DiscordHtmlTranscripts {
 
         embedImageLink.appendChild(embedImageImage);
         embedImage.appendChild(embedImageLink);
-
         embedContentContainer.appendChild(embedImage);
     }
 
     private void handleEmbedThumbnail(Document document, MessageEmbed embed, Element embedContent) {
+        if (embed.getThumbnail() == null || embed.getThumbnail().getUrl() == null) return;
         Element embedThumbnail = document.createElement("div");
         embedThumbnail.addClass("chatlog__embed-thumbnail-container");
 
@@ -106,62 +98,53 @@ public class DiscordHtmlTranscripts {
 
         embedThumbnailLink.appendChild(embedThumbnailImage);
         embedThumbnail.appendChild(embedThumbnailLink);
-
         embedContent.appendChild(embedThumbnail);
     }
 
     private void handleEmbedFields(Document document, MessageEmbed embed, Element embedText) {
+        if (embed.getFields() == null || embed.getFields().isEmpty()) return;
         Element embedFields = document.createElement("div");
         embedFields.addClass("chatlog__embed-fields");
 
         for (MessageEmbed.Field field : embed.getFields()) {
+            if (field == null) continue;
             Element embedField = document.createElement("div");
             embedField.addClass("chatlog__embed-field");
 
-            // Field nmae
             Element embedFieldName = document.createElement("div");
             embedFieldName.addClass("chatlog__embed-field-name");
-
             Element embedFieldNameMarkdown = document.createElement("div");
             embedFieldNameMarkdown.addClass("markdown preserve-whitespace");
-            embedFieldNameMarkdown.html(field.getName());
-
+            embedFieldNameMarkdown.html(field.getName() != null ? field.getName() : "");
             embedFieldName.appendChild(embedFieldNameMarkdown);
             embedField.appendChild(embedFieldName);
 
-
-            // Field value
             Element embedFieldValue = document.createElement("div");
             embedFieldValue.addClass("chatlog__embed-field-value");
-
             Element embedFieldValueMarkdown = document.createElement("div");
             embedFieldValueMarkdown.addClass("markdown preserve-whitespace");
-            embedFieldValueMarkdown
-                    .html(Formatter.format(field.getValue()));
-
+            embedFieldValueMarkdown.html(Formatter.format(field.getValue() != null ? field.getValue() : ""));
             embedFieldValue.appendChild(embedFieldValueMarkdown);
             embedField.appendChild(embedFieldValue);
 
             embedFields.appendChild(embedField);
         }
-
         embedText.appendChild(embedFields);
     }
 
     private void handleEmbedDescription(Document document, MessageEmbed embed, Element embedText) {
+        if (embed.getDescription() == null) return;
         Element embedDescription = document.createElement("div");
         embedDescription.addClass("chatlog__embed-description");
-
         Element embedDescriptionMarkdown = document.createElement("div");
         embedDescriptionMarkdown.addClass("markdown preserve-whitespace");
-        embedDescriptionMarkdown
-                .html(Formatter.format(embed.getDescription()));
-
+        embedDescriptionMarkdown.html(Formatter.format(embed.getDescription()));
         embedDescription.appendChild(embedDescriptionMarkdown);
         embedText.appendChild(embedDescription);
     }
 
     private void handleEmbedTitle(Document document, MessageEmbed embed, Element embedText) {
+        if (embed.getTitle() == null) return;
         Element embedTitle = document.createElement("div");
         embedTitle.addClass("chatlog__embed-title");
 
@@ -171,22 +154,22 @@ public class DiscordHtmlTranscripts {
             embedTitleLink.attr("href", embed.getUrl());
 
             Element embedTitleMarkdown = document.createElement("div");
-            embedTitleMarkdown.addClass("markdown preserve-whitespace")
-                    .html(Formatter.format(embed.getTitle()));
+            embedTitleMarkdown.addClass("markdown preserve-whitespace");
+            embedTitleMarkdown.html(Formatter.format(embed.getTitle()));
 
             embedTitleLink.appendChild(embedTitleMarkdown);
             embedTitle.appendChild(embedTitleLink);
         } else {
             Element embedTitleMarkdown = document.createElement("div");
-            embedTitleMarkdown.addClass("markdown preserve-whitespace")
-                    .html(Formatter.format(embed.getTitle()));
-
+            embedTitleMarkdown.addClass("markdown preserve-whitespace");
+            embedTitleMarkdown.html(Formatter.format(embed.getTitle()));
             embedTitle.appendChild(embedTitleMarkdown);
         }
         embedText.appendChild(embedTitle);
     }
 
     private void handleEmbedAuthor(Document document, MessageEmbed embed, Element embedText) {
+        if (embed.getAuthor() == null) return;
         Element embedAuthor = document.createElement("div");
         embedAuthor.addClass("chatlog__embed-author");
 
@@ -196,22 +179,21 @@ public class DiscordHtmlTranscripts {
             embedAuthorIcon.attr("src", embed.getAuthor().getIconUrl());
             embedAuthorIcon.attr("alt", "Author icon");
             embedAuthorIcon.attr("loading", "lazy");
-
             embedAuthor.appendChild(embedAuthorIcon);
         }
 
         Element embedAuthorName = document.createElement("span");
         embedAuthorName.addClass("chatlog__embed-author-name");
 
-        if (embed.getAuthor().getUrl() != null) {
+        if (embed.getAuthor().getUrl() != null)
+        {
             Element embedAuthorNameLink = document.createElement("a");
             embedAuthorNameLink.addClass("chatlog__embed-author-name-link");
             embedAuthorNameLink.attr("href", embed.getAuthor().getUrl());
-            embedAuthorNameLink.text(embed.getAuthor().getName());
-
+            embedAuthorNameLink.text(embed.getAuthor().getName() != null ? embed.getAuthor().getName() : "Unknown");
             embedAuthorName.appendChild(embedAuthorNameLink);
         } else {
-            embedAuthorName.text(embed.getAuthor().getName());
+            embedAuthorName.text(embed.getAuthor().getName() != null ? embed.getAuthor().getName() : "Unknown");
         }
 
         embedAuthor.appendChild(embedAuthorName);
