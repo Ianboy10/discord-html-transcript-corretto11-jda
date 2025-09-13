@@ -1,5 +1,5 @@
-package de.nopro200.utils.format.impl;
-import de.nopro200.utils.format.IFormatHelper;
+package de.ianboy10.utils.format.impl;
+import de.ianboy10.utils.format.IFormatHelper;
 import java.util.Arrays;
 import java.util.List;
 

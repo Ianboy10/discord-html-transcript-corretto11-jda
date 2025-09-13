@@ -1,9 +1,9 @@
-package de.nopro200;
+package de.ianboy10;
 
-import de.nopro200.utils.format.IFormatHelper;
-import de.nopro200.utils.format.impl.AudioFormat;
-import de.nopro200.utils.format.impl.ImageFormat;
-import de.nopro200.utils.format.impl.VideoFormat;
+import de.ianboy10.utils.format.IFormatHelper;
+import de.ianboy10.utils.format.impl.AudioFormat;
+import de.ianboy10.utils.format.impl.ImageFormat;
+import de.ianboy10.utils.format.impl.VideoFormat;
 import kotlin.text.Charsets;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;

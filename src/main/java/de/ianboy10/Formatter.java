@@ -1,4 +1,4 @@
-package de.nopro200;
+package de.ianboy10;
 
 import lombok.experimental.UtilityClass;
 

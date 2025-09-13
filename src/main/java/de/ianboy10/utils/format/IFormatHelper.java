@@ -1,4 +1,4 @@
-package de.nopro200.utils.format;
+package de.ianboy10.utils.format;
 
 import java.util.List;
 import java.util.function.Predicate;
